@@ -265,8 +265,8 @@ parameters {auto c : Ref Ctxt Defs} {auto u : Ref UST UState}
                 Bool ->
                 Core (Int, Term vars)
   newMetaLets {vars} fc rig env n ty def lets
-      = do let hty = if lets then abstractFullEnvType fc env ty
-                             else abstractEnvType fc env ty
+      = do let hty = if lets then abstractFullEnvType fc env rig ty
+                             else abstractEnvType fc env rig ty
            let hole = newDef fc n rig hty Public def
            log "unify.meta" 5 $ "Adding new meta " ++ show (n, fc, rig)
            logTerm "unify.meta" 10 ("New meta type " ++ show n) hty
@@ -275,7 +275,7 @@ parameters {auto c : Ref Ctxt Defs} {auto u : Ref UST UState}
            pure (idx, Meta fc n idx envArgs)
     where
       envArgs : List (RigCount, Term vars)
-      envArgs = let args = reverse (mkConstantAppArgs {done = [<]} lets fc env [<]) in
+      envArgs = let args = reverse (mkConstantAppArgs {done = [<]} lets fc (divEnv env rig) [<]) in
                     rewrite sym (appendLinLeftNeutral vars) in args
 
   export
@@ -302,8 +302,8 @@ parameters {auto c : Ref Ctxt Defs} {auto u : Ref UST UState}
                 (constrs : List Int) ->
                 Core (Term vars)
   newConstant {vars} fc rig env tm ty constrs
-      = do let def = mkConstant fc env tm
-           let defty = abstractFullEnvType fc env ty
+      = do let def = mkConstant fc (divEnv env rig) tm
+           let defty = abstractFullEnvType fc env rig ty
            cn <- genName "postpone"
            let guess = newDef fc cn rig defty Public
                               (Guess def (length env) constrs)
@@ -314,7 +314,7 @@ parameters {auto c : Ref Ctxt Defs} {auto u : Ref UST UState}
            pure (Meta fc cn idx envArgs)
     where
       envArgs : List (RigCount, Term vars)
-      envArgs = let args = reverse (mkConstantAppArgs {done = [<]} True fc env [<]) in
+      envArgs = let args = reverse (mkConstantAppArgs {done = [<]} True fc (divEnv env rig) [<]) in
                     rewrite sym (appendLinLeftNeutral vars) in args
 
   export

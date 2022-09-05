@@ -184,7 +184,7 @@ addLHS : {vars : _} ->
          FC -> Nat -> Env Term vars -> Term vars -> Core ()
 addLHS loc outerenvlen env tm
     = do meta <- get MD
-         tm' <- toFullNames (bindEnv loc (toPat env) tm)
+         tm' <- toFullNames (bindEnv' loc (toPat env) tm)
          -- Put the lhs on the metadata if it's not empty
          whenJust (isNonEmptyFC loc) $ \ neloc =>
            put MD $ { lhsApps $= ((neloc, outerenvlen, tm') ::) } meta
@@ -221,7 +221,7 @@ parameters {c : Ref Ctxt Defs} {m : Ref MD Metadata}
 
            -- Add the type declaration to the metadata if the file context is not empty
            whenJust (isNonEmptyFC loc) $ \ neloc =>
-             put MD $ { tydecls $= ( (neloc, (n', length env, bindEnv loc env tm)) ::) } meta
+             put MD $ { tydecls $= ( (neloc, (n', length env, bindEnv' loc env tm)) ::) } meta
 
   export
   addNameLoc : FC -> Name -> Core ()

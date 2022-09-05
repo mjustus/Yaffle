@@ -351,7 +351,7 @@ newDef fc n rig ty vis def
         , type = ty
         , definition = def
         , evaldef = Nothing
-        , multiplicity = rig
+        , presence = elimSemi False True (const True) rig
         , visibility = vis
         , totality = unchecked
         , flags = []

@@ -63,50 +63,47 @@ defined {vars = xs :< x} n (env :< b)
 -- Bind additional pattern variables in an LHS, when checking an LHS in an
 -- outer environment
 export
-bindEnv : {vars : _} -> FC -> Env Term vars -> (tm : Term vars) -> ClosedTerm
-bindEnv loc [<] tm = tm
-bindEnv loc (env :< b) tm
-    = bindEnv loc env (Bind loc _ (PVar (binderLoc b)
-                                        (multiplicity b)
-                                        Explicit
-                                        (binderType b)) tm)
+bindEnv' : {vars : _} -> FC -> Env Term vars -> (tm : Term vars) -> ClosedTerm
+bindEnv' loc [<] tm = tm
+bindEnv' loc (env :< b) tm
+    = bindEnv' loc env (Bind loc _ (PVar (binderLoc b)
+                                         (multiplicity b)
+                                         Explicit
+                                         (binderType b)) tm)
 
 -- Make a type which abstracts over an environment
 -- Don't include 'let' bindings, since they have a concrete value and
 -- shouldn't be generalised
-export
-abstractEnvType : {vars : _} ->
-                  FC -> Env Term vars -> (tm : Term vars) -> Term [<]
-abstractEnvType fc [<] tm = tm
-abstractEnvType fc (env :< Let fc' c val ty) tm
-    = abstractEnvType fc env (Bind fc _ (Let fc' c val ty) tm)
-abstractEnvType fc (env :< Pi fc' c e ty) tm
-    = abstractEnvType fc env (Bind fc _ (Pi fc' c e ty) tm)
-abstractEnvType fc (env :< b) tm
+abstractEnvType' : {vars : _} ->
+                   FC -> Env Term vars -> (tm : Term vars) -> Term [<]
+abstractEnvType' fc [<] tm = tm
+abstractEnvType' fc (env :< Let fc' c val ty) tm
+    = abstractEnvType' fc env (Bind fc _ (Let fc' c val ty) tm)
+abstractEnvType' fc (env :< Pi fc' c e ty) tm
+    = abstractEnvType' fc env (Bind fc _ (Pi fc' c e ty) tm)
+abstractEnvType' fc (env :< b) tm
     = let bnd = Pi (binderLoc b) (multiplicity b) Explicit (binderType b)
-       in abstractEnvType fc env (Bind fc _ bnd tm)
+       in abstractEnvType' fc env (Bind fc _ bnd tm)
 
 -- As above, for the corresponding term
-export
-abstractEnv : {vars : _} ->
-              FC -> Env Term vars -> (tm : Term vars) -> Term [<]
-abstractEnv fc [<] tm = tm
-abstractEnv fc (env :< Let fc' c val ty) tm
-    = abstractEnv fc env (Bind fc _ (Let fc' c val ty) tm)
-abstractEnv fc (env :< b) tm
+abstractEnv' : {vars : _} ->
+               FC -> Env Term vars -> (tm : Term vars) -> Term [<]
+abstractEnv' fc [<] tm = tm
+abstractEnv' fc (env :< Let fc' c val ty) tm
+    = abstractEnv' fc env (Bind fc _ (Let fc' c val ty) tm)
+abstractEnv' fc (env :< b) tm
     = let bnd = Lam (binderLoc b) (multiplicity b) Explicit (binderType b)
-      in abstractEnv fc env (Bind fc _ bnd tm)
+      in abstractEnv' fc env (Bind fc _ bnd tm)
 
 -- As above, but abstract over all binders including lets
-export
-abstractFullEnvType : {vars : _} ->
-                      FC -> Env Term vars -> (tm : Term vars) -> Term [<]
-abstractFullEnvType fc [<] tm = tm
-abstractFullEnvType fc (env :< Pi fc' c e ty) tm
-    = abstractFullEnvType fc env (Bind fc _ (Pi fc' c e ty) tm)
-abstractFullEnvType fc (env :< b) tm
+abstractFullEnvType' : {vars : _} ->
+                       FC -> Env Term vars -> (tm : Term vars) -> Term [<]
+abstractFullEnvType' fc [<] tm = tm
+abstractFullEnvType' fc (env :< Pi fc' c e ty) tm
+    = abstractFullEnvType' fc env (Bind fc _ (Pi fc' c e ty) tm)
+abstractFullEnvType' fc (env :< b) tm
     = let bnd = Pi fc (multiplicity b) Explicit (binderType b)
-      in abstractFullEnvType fc env (Bind fc _ bnd tm)
+      in abstractFullEnvType' fc env (Bind fc _ bnd tm)
 
 divWEnv : Env Term vars -> Env Term vars
 divWEnv [<] = [<]
@@ -126,3 +123,23 @@ export
 divEnv : Env Term vars -> RigCount -> Env Term vars
 divEnv env RigW = divWEnv env
 divEnv env _ = env
+
+
+export
+abstractEnvType : {vars : _} ->
+                  FC -> Env Term vars -> RigCount -> (tm : Term vars) -> Term [<]
+abstractEnvType fc env rig tm = abstractEnvType' fc (divEnv env rig) tm
+
+export
+abstractEnv : {vars : _} ->
+              FC -> Env Term vars -> RigCount -> (tm : Term vars) -> Term [<]
+abstractEnv fc env rig tm = abstractEnv' fc (divEnv env rig) tm
+
+export
+abstractFullEnvType : {vars : _} ->
+                      FC -> Env Term vars -> RigCount -> (tm : Term vars) -> Term [<]
+abstractFullEnvType fc env rig tm = abstractFullEnvType' fc (divEnv env rig) tm
+
+export
+bindEnv : {vars : _} -> FC -> Env Term vars -> RigCount -> (tm : Term vars) -> ClosedTerm
+bindEnv fc env rig tm = bindEnv' fc (divEnv env rig) tm

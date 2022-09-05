@@ -146,7 +146,7 @@ record GlobalDef where
   type : Term [<]
   definition : Def
   evaldef : Maybe CompiledTerm
-  multiplicity : RigCount
+  presence : Bool
   visibility : Visibility
   totality : Totality
   flags : List DefFlag
@@ -156,6 +156,10 @@ record GlobalDef where
   compexpr : Maybe CDef
   namedcompexpr : Maybe NamedDef
   sizeChange : List SCCall
+
+export
+multiplicity : GlobalDef -> RigCount
+multiplicity def = if presence def then linear else erased
 
 export
 TTC GlobalDef where
